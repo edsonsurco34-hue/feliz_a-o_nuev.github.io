@@ -5,11 +5,12 @@ let nombreDestinatarioGlobal = '';
 let nombreRemitenteGlobal = '';
 let esMadre = false;
 
-// ========== ALMACENAMIENTO EN MEMORIA (Reemplaza localStorage) ==========
+// ========== ALMACENAMIENTO EN MEMORIA ==========
 const memoryStorage = {
   userID: null,
   parentID: null,
-  nombreRemitente: null
+  nombreRemitente: null,
+  cambioNombre: false
 };
 
 function obtenerUserID() {
@@ -27,7 +28,7 @@ function obtenerCadenaParental() {
 }
 
 const USER_ID = obtenerUserID();
-const CADENA_PARENTAL = obtenerCadenaParental();
+let CADENA_PARENTAL = obtenerCadenaParental();
 
 // ========== INICIALIZACIÓN ==========
 window.addEventListener('DOMContentLoaded', () => {
@@ -35,15 +36,46 @@ window.addEventListener('DOMContentLoaded', () => {
   
   document.getElementById('remitente').value = nombreActual;
   
-  // Verificar si es la madre
-  esMadre = (CADENA_PARENTAL === 'MADRE');
+  esMadre = (CADENA_PARENTAL === 'MADRE' && !memoryStorage.cambioNombre);
   
   document.getElementById('loading').style.display = 'none';
   document.getElementById('formulario').style.display = 'block';
   
   console.log('👤 Usuario:', USER_ID.substring(0, 15));
   console.log('👨‍👩‍👧‍👦 Cadena:', esMadre ? 'MADRE (original)' : 'HIJO (compartida)');
+  
+  generarLinkCompartir();
 });
+
+// ========== GENERAR LINK PARA COMPARTIR ==========
+function generarLinkCompartir() {
+  const linkFijo = 'https://edsonsurco34-hue.github.io/feliz_a-o_nuev.github.io/';
+  const linkCompartir = document.getElementById('linkCompartir');
+  if (linkCompartir) {
+    linkCompartir.value = linkFijo;
+  }
+}
+
+// ========== COPIAR LINK ==========
+function copiarLink() {
+  const linkInput = document.getElementById('linkCompartir');
+  linkInput.select();
+  linkInput.setSelectionRange(0, 99999);
+  
+  try {
+    document.execCommand('copy');
+    const btnCopiar = event.target;
+    const textoOriginal = btnCopiar.textContent;
+    btnCopiar.textContent = '✓ Copiado!';
+    btnCopiar.style.background = 'rgba(76, 175, 80, 0.3)';
+    setTimeout(() => {
+      btnCopiar.textContent = textoOriginal;
+      btnCopiar.style.background = '';
+    }, 2000);
+  } catch (err) {
+    alert('No se pudo copiar. Por favor copia manualmente.');
+  }
+}
 
 // ========== TELEGRAM ==========
 async function enviarTelegram(mensaje) {
@@ -88,13 +120,14 @@ async function editarNombre() {
       return;
     }
     
-    // Guardar nombre en memoria
     memoryStorage.nombreRemitente = nuevo;
     
-    // Marcar como hijo si cambió el nombre
     if (nuevo !== CONFIG.NOMBRE_MADRE && CADENA_PARENTAL === 'MADRE') {
       memoryStorage.parentID = 'HIJO-' + USER_ID;
-      console.log('🔄 Cambio de MADRE a HIJO');
+      memoryStorage.cambioNombre = true;
+      CADENA_PARENTAL = memoryStorage.parentID;
+      esMadre = false;
+      console.log('🔄 Cambio de MADRE a HIJO - esMadre:', esMadre);
     }
     
     if (nuevo !== window.nombreAnterior) {
@@ -102,9 +135,9 @@ async function editarNombre() {
       const fecha = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
       const hora = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
       
-      const tipoCuenta = CADENA_PARENTAL === 'MADRE' ? 'MADRE' : 'HIJO';
+      const tipoCuenta = esMadre ? 'MADRE' : 'HIJO';
       
-      const mensaje = `🔄 NOMBRE ACTUALIZADO (${tipoCuenta})
+      const mensaje = `🔄 NOMBRE ACTUALIZADO
 
 📝 Anterior: ${window.nombreAnterior}
 ✨ Nuevo: ${nuevo}
@@ -121,7 +154,11 @@ ${tipoCuenta === 'MADRE' ? '👑 Cuenta madre actualizada' : '👶 Cuenta hijo i
     btn.textContent = '✓ Guardado';
     btn.style.background = 'rgba(255, 119, 0, 0.3)';
     btn.style.color = '#ffaa00';
-    setTimeout(() => { btn.textContent = '✏️ Editar'; }, 1500);
+    setTimeout(() => { 
+      btn.textContent = '✏️ Editar';
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 1500);
   }
 }
 
@@ -129,7 +166,6 @@ ${tipoCuenta === 'MADRE' ? '👑 Cuenta madre actualizada' : '👶 Cuenta hijo i
 function esNombreEspecial(nombre) {
   const nombreLower = nombre.toLowerCase().trim();
   
-  // Verificar la persona especial
   const personaEspecial = CONFIG.NOMBRES_ESPECIALES.PERSONA_ESPECIAL;
   for (let alias of personaEspecial.aliases) {
     if (nombreLower.includes(alias.toLowerCase())) {
@@ -156,7 +192,6 @@ async function iniciar() {
     return;
   }
   
-  // Guardar nombres globalmente
   nombreDestinatarioGlobal = destinatario;
   nombreRemitenteGlobal = remitente;
   
@@ -178,20 +213,77 @@ ${tipoCuenta === 'MADRE' ? '👑 Enviado desde cuenta madre' : '👶 Enviado des
 
   await enviarTelegram(mensaje);
   
-  // Verificar si es nombre especial (SOLO MADRE)
+  console.log('Verificando mensaje especial - esMadre:', esMadre);
   if (esMadre) {
     const nombreEspecial = esNombreEspecial(destinatario);
     if (nombreEspecial) {
+      console.log('✨ Mensaje especial activado para madre');
       mostrarMensajeEspecial(destinatario, nombreEspecial);
       return;
     }
   }
   
-  // Continuar normalmente
   mostrarEscena(remitente, destinatario);
 }
 
-// ========== MOSTRAR MENSAJE ESPECIAL (SOLO MADRE) ==========
+// ========== REGRESAR AL FORMULARIO (MEJORADO) ==========
+function regresarFormulario() {
+  // Crear efecto de confirmación suave
+  const confirmar = confirm('¿Deseas volver al inicio?\n\n✨ Se perderá el mensaje actual');
+  
+  if (!confirmar) return;
+  
+  // Detener temporizador si existe
+  if (temporizadorInterval) {
+    clearInterval(temporizadorInterval);
+    temporizadorInterval = null;
+  }
+  
+  // Animación de salida suave
+  const escena = document.getElementById('escena');
+  escena.style.opacity = '0';
+  escena.style.transform = 'scale(0.95)';
+  escena.style.transition = 'all 0.3s ease';
+  
+  setTimeout(() => {
+    // Ocultar escena y mostrar formulario
+    escena.style.display = 'none';
+    const formulario = document.getElementById('formulario');
+    formulario.style.display = 'block';
+    formulario.style.opacity = '0';
+    formulario.style.transform = 'scale(0.95)';
+    
+    // Reset estilos de contenido principal
+    document.getElementById('contenidoPrincipal').style.display = 'none';
+    document.getElementById('compartirMensaje').style.display = 'none';
+    document.getElementById('mensajeFinal').innerHTML = '';
+    
+    // Animación de entrada del formulario
+    setTimeout(() => {
+      formulario.style.transition = 'all 0.3s ease';
+      formulario.style.opacity = '1';
+      formulario.style.transform = 'scale(1)';
+    }, 50);
+    
+    // Limpiar campo destinatario y enfocar
+    document.getElementById('destinatario').value = '';
+    setTimeout(() => {
+      document.getElementById('destinatario').focus();
+    }, 350);
+    
+    // Reset estilos de escena para próxima vez
+    setTimeout(() => {
+      escena.style.opacity = '1';
+      escena.style.transform = 'scale(1)';
+      escena.style.transition = 'none';
+    }, 400);
+    
+    // Scroll arriba suave
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 300);
+}
+
+// ========== MOSTRAR MENSAJE ESPECIAL ==========
 function mostrarMensajeEspecial(nombre, clave) {
   const datos = CONFIG.NOMBRES_ESPECIALES[clave];
   
@@ -201,10 +293,8 @@ function mostrarMensajeEspecial(nombre, clave) {
   document.getElementById('tituloEspecial').textContent = `¡Feliz Año Nuevo, ${datos.nombreReal}!`;
   document.getElementById('textoEspecial').textContent = datos.mensaje;
   
-  // Iniciar temporizador en mensaje especial
   iniciarTemporizadorEspecial();
   
-  // Enviar notificación especial
   const ahora = new Date();
   const fecha = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   const hora = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -221,7 +311,7 @@ function mostrarMensajeEspecial(nombre, clave) {
   enviarTelegram(mensajeTelegram);
 }
 
-// ========== TEMPORIZADOR PARA MENSAJE ESPECIAL ==========
+// ========== TEMPORIZADOR ESPECIAL ==========
 let temporizadorEspecialInterval = null;
 
 function iniciarTemporizadorEspecial() {
@@ -235,10 +325,6 @@ function actualizarTemporizadorEspecial() {
   
   if (diferencia <= 0) {
     clearInterval(temporizadorEspecialInterval);
-    document.getElementById('dias-especial').textContent = '00';
-    document.getElementById('horas-especial').textContent = '00';
-    document.getElementById('minutos-especial').textContent = '00';
-    document.getElementById('segundos-especial').textContent = '00';
     return;
   }
   
@@ -247,15 +333,19 @@ function actualizarTemporizadorEspecial() {
   const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
   const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
   
-  document.getElementById('dias-especial').textContent = String(dias).padStart(2, '0');
-  document.getElementById('horas-especial').textContent = String(horas).padStart(2, '0');
-  document.getElementById('minutos-especial').textContent = String(minutos).padStart(2, '0');
-  document.getElementById('segundos-especial').textContent = String(segundos).padStart(2, '0');
+  const diasEl = document.getElementById('dias-especial');
+  const horasEl = document.getElementById('horas-especial');
+  const minutosEl = document.getElementById('minutos-especial');
+  const segundosEl = document.getElementById('segundos-especial');
+  
+  if (diasEl) diasEl.textContent = String(dias).padStart(2, '0');
+  if (horasEl) horasEl.textContent = String(horas).padStart(2, '0');
+  if (minutosEl) minutosEl.textContent = String(minutos).padStart(2, '0');
+  if (segundosEl) segundosEl.textContent = String(segundos).padStart(2, '0');
 }
 
-// ========== CONTINUAR DESPUÉS DEL MENSAJE ESPECIAL ==========
+// ========== CONTINUAR DESPUÉS ESPECIAL ==========
 function continuarDespuesEspecial() {
-  // Detener temporizador especial
   if (temporizadorEspecialInterval) {
     clearInterval(temporizadorEspecialInterval);
   }
@@ -268,10 +358,6 @@ function continuarDespuesEspecial() {
 function mostrarEscena(remitente, destinatario) {
   document.getElementById("formulario").style.display = "none";
   document.getElementById("escena").style.display = "block";
-  
-  // Actualizar header con nombre
-  const primerNombre = remitente.split(' ')[0] + ' ' + (remitente.split(' ')[1] || '');
-  document.getElementById("headerName").textContent = primerNombre;
   
   document.getElementById("mensajeInicial").innerHTML = `De: ${remitente} • Para: ${destinatario}`;
   document.getElementById("nombreEspecial").innerHTML = `🎉 Para ${destinatario} 🎉`;
@@ -286,11 +372,10 @@ function mostrarMensajeFinal() {
   document.getElementById('contenidoPrincipal').style.display = 'flex';
   document.getElementById('compartirMensaje').style.display = 'block';
   
-  // Scroll suave hacia el contenido principal después de que se muestre
   setTimeout(() => {
     const contenido = document.getElementById('contenidoPrincipal');
     if (contenido) {
-      const yOffset = -80; // Offset para que no quede pegado arriba
+      const yOffset = -80;
       const y = contenido.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -547,7 +632,7 @@ function crearEstrellas() {
   document.head.appendChild(style);
 }
 
-// ========== ANIMACIÓN 3D (Copas brindando con burbujas) ==========
+// ========== ANIMACIÓN 3D (COPAS Y BURBUJAS) ==========
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = canvas.height = 500;
@@ -723,8 +808,10 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
+// ========== EVENT LISTENERS ==========
 document.getElementById('destinatario').addEventListener('keypress', e => {
   if (e.key === 'Enter') iniciar();
 });
 
+// Iniciar estrellas al cargar
 crearEstrellas();
