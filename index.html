@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¡Feliz Año Nuevo 2026! 🎆</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Estrellas de fondo -->
+<div class="stars-background"></div>
+
+<div id="app">
+  <!-- Pantalla de carga -->
+  <div class="loading" id="loading">⏳ Cargando...</div>
+  
+  <!-- Formulario inicial -->
+  <div id="formulario" style="display: none;">
+    <div class="header-name">EDSON SURCO</div>
+    
+    <h2 class="fire-text">🎆 Envía tu Tarjeta de Año Nuevo 2026 🎊</h2>
+    
+    <div class="input-group">
+      <label>De:</label>
+      <div class="input-container">
+        <input type="text" id="remitente" value="EDSON SURCO QUISPE" readonly>
+        <button class="btn-editar" onclick="editarNombre()">✏️ Editar</button>
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <label>Para (nombre completo):</label>
+      <input type="text" id="destinatario" placeholder="Ingresa el nombre completo" autofocus>
+    </div>
+    
+    <button onclick="iniciar()">✨ Ver Cuenta Regresiva ✨</button>
+  </div>
+  
+  <!-- Escena principal con temporizador -->
+  <div id="escena" style="display: none;">
+    <!-- Header con nombre -->
+    <div class="header-name-scene" id="headerName">EDSON SURCO</div>
+    
+    <div id="mensajeInicial"></div>
+    
+    <!-- Mensaje superior -->
+    <div class="mensaje-superior">
+      <p id="mensajeSuperiorTexto">Falta poco para...</p>
+    </div>
+    
+    <!-- Año grande con efecto de fuego -->
+    <div class="ano-grande fire-text">2026</div>
+    <div class="subtitulo-ano">UN NUEVO COMIENZO</div>
+    
+    <!-- Temporizador de cuenta regresiva -->
+    <div id="temporizador-container">
+      <div id="temporizador">
+        <div class="tiempo-box">
+          <span class="numero" id="dias">00</span>
+          <span class="etiqueta">DÍAS</span>
+        </div>
+        <div class="tiempo-box">
+          <span class="numero" id="horas">00</span>
+          <span class="etiqueta">HORAS</span>
+        </div>
+        <div class="tiempo-box">
+          <span class="numero" id="minutos">00</span>
+          <span class="etiqueta">MINUTOS</span>
+        </div>
+        <div class="tiempo-box">
+          <span class="numero" id="segundos">00</span>
+          <span class="etiqueta">SEGUNDOS</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Frase -->
+    <div class="frase-bonita">"Un nuevo año, nuevas oportunidades"</div>
+    
+    <!-- Botón para iniciar -->
+    <button class="btn-iniciar" onclick="mostrarMensajeFinal()">🎊 Ver Mensaje 🎊</button>
+    
+    <!-- Contenido principal (oculto inicialmente) -->
+    <div class="contenido-principal" id="contenidoPrincipal" style="display: none;">
+      <div class="copa-container">
+        <div id="fixed-bg">
+          <canvas id="canvas"></canvas>
+        </div>
+      </div>
+      
+      <div class="mensaje-lateral">
+        <span class="decoracion">🎆</span>
+        <h1 id="titulo-mensaje" class="fire-text">Feliz Año Nuevo</h1>
+        <p id="parrafo-1">Que este nuevo año te traiga prosperidad, salud y momentos inolvidables.</p>
+        <p id="parrafo-2">Que el 2026 sea un año de logros, alegrías y nuevas aventuras.</p>
+        <p id="parrafo-3">¡Que todos tus sueños se hagan realidad!</p>
+        <span class="destacado" id="nombreEspecial">🎉 Para ti 🎉</span>
+        <div class="firma" id="firmaRemitente">Saludos y abrazos  de parte de  ✨</div>
+      </div>
+    </div>
+    
+    <div id="mensajeFinal"></div>
+    
+    <!-- Mensaje para compartir -->
+    <div class="compartir-mensaje" id="compartirMensaje" style="display: none;">
+      <p class="compartir-text">📲 ¡Comparte esta tarjeta con tus amigos y familiares!</p>
+      <p class="compartir-subtext">Envíales este link para que también celebren el Año Nuevo</p>
+    </div>
+  </div>
+  
+  <!-- Pantalla de celebración (después de llegar a 0) -->
+  <div id="celebracion" style="display: none;">
+    <canvas id="fireworks-canvas"></canvas>
+    <h1 class="titulo-celebracion fire-text-big">🎊 ¡FELIZ 2026! 🎉</h1>
+    <p class="mensaje-celebracion" id="mensaje-celebracion-texto"></p>
+    <div class="compartir-mensaje">
+      <p class="compartir-text">📲 Comparte con tus seres queridos</p>
+    </div>
+  </div>
+  
+  <!-- Mensaje especial secreto (solo para madre) -->
+  <div id="mensaje-especial" style="display: none;">
+    <div class="mensaje-especial-container">
+      <div class="icono-grande">🌟</div>
+      <h1 class="titulo-especial fire-text" id="tituloEspecial"></h1>
+      <p class="fecha-especial" id="fechaEspecial"></p>
+      <p class="texto-especial" id="textoEspecial"></p>
+      <div class="decoracion-especial">✨  🎉 ✨</div>
+      <button class="btn-continuar" onclick="continuarDespuesEspecial()">🎊 Continuar 🎊</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confetti para celebración -->
+<canvas id="confetti-canvas"></canvas>
+
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
